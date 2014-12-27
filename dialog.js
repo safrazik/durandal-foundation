@@ -243,19 +243,14 @@ define(['durandal/app', 'plugins/dialog', 'durandal/viewEngine', 'jquery'], func
                 };
             }
             theDialog.$target = $(model.target);
-            if(!theDialog.$target.length){
-                throw new Error('Popup should have a target');
-            }
-            theDialog.$target.wrap('<div class="popup-target-wrapper"></div>'); 
-            theDialog.$target.parent().wrap('<div class="popup-container" style="position: relative; display: inline-block;"></div>');
-            var $container = theDialog.$target.parent().parent();
             theDialog.$host = $('<div class="padding popup is-active" style="z-index: 2000;'
-             // + ' position: absolute; top: -50%; left: -50%;'
+             + ' position: fixed;'
              + '"></div>')
-            .appendTo($container);
+            .appendTo(document.body);
+
             theDialog.host = theDialog.$host.get(0);
             theDialog.$overlay = $('<div class="modal-overlay is-active fadeIn ng-enter fast"></div></div>')
-            .insertAfter($container);
+            .appendTo(document.body);
             if(!model.overlay){
                 theDialog.$overlay.css('background-color', 'transparent');
             }
@@ -265,13 +260,26 @@ define(['durandal/app', 'plugins/dialog', 'durandal/viewEngine', 'jquery'], func
                 .addClass('fadeOut ng-leave ng-leave-active');
             theDialog.$host.removeClass('tether-enabled');
             onAnimationEnd(theDialog.$host, function(){
-                theDialog.$host.parent().before(theDialog.$target);
-                theDialog.$host.parent().remove();
+                theDialog.$host.remove();
                 theDialog.$overlay.remove();
             });
         },
         compositionComplete: function(child, parent, context){
             var theDialog = dialog.getDialog(context.model);
+
+            if(theDialog.$target.length){
+                var offset = theDialog.$target.offset();
+                theDialog.$host.css({
+                    left: offset.left - $(document).scrollLeft(),
+                    top: offset.top - $(document).scrollTop() + theDialog.$target.height()
+                });
+            }
+            else {
+                theDialog.$host.css({
+                    left: ($(window).width() - theDialog.$host.width())/2,
+                    top: ($(window).height() - theDialog.$host.height())/2,
+                })
+            }
             window.setTimeout(function(){
                 theDialog.$host.addClass('tether-enabled');
                 theDialog.$overlay.addClass('ng-enter-active'); 
